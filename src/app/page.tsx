@@ -6,7 +6,6 @@ import { initialEntries, riders } from '@/lib/data';
 import { Header } from '@/components/dashboard/header';
 import { MetricsCards } from '@/components/dashboard/metrics-cards';
 import { EntriesTable } from '@/components/dashboard/entries-table';
-import { SubmissionChart } from '@/components/dashboard/submission-chart';
 import { MonthlyReportCard } from '@/components/dashboard/monthly-report-card';
 import { EntryForm } from '@/components/dashboard/entry-form';
 
@@ -17,9 +16,23 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setIsClient(true);
-    setEntries(initialEntries);
+    // Only set initial entries on the client
+    const storedEntries = localStorage.getItem('dashboardEntries');
+    if (storedEntries) {
+      setEntries(JSON.parse(storedEntries, (key, value) => {
+        if (key === 'date') return new Date(value);
+        return value;
+      }));
+    } else {
+      setEntries(initialEntries);
+    }
   }, []);
 
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('dashboardEntries', JSON.stringify(entries));
+    }
+  }, [entries, isClient]);
 
   const handleAddEntry = (newEntryData: Omit<Entry, 'id' | 'date'> & { date: Date }) => {
     const newEntry: Entry = {
@@ -46,8 +59,7 @@ export default function DashboardPage() {
               <EntriesTable allEntries={entries} riders={riders} />
             </div>
             <div className="flex flex-col gap-4 md:gap-8">
-              <SubmissionChart entries={entries} />
-              <MonthlyReportCard entries={entries} riders={riders} />
+              <MonthlyReportCard />
             </div>
           </div>
         </main>
