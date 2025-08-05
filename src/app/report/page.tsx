@@ -32,6 +32,7 @@ export default function ReportPage() {
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [showTop10, setShowTop10] = useState(false);
   const [reportData, setReportData] = useState<RiderStats[]>([]);
+  const [totalMonthEntries, setTotalMonthEntries] = useState(0);
   const [generatedDate, setGeneratedDate] = useState<string>('');
   const [entries, setEntries] = useState<Entry[]>([]);
   const [riders, setRiders] = useState<Rider[]>([]);
@@ -64,6 +65,9 @@ export default function ReportPage() {
       const entryDate = new Date(entry.date);
       return entryDate >= startDate && entryDate <= endDate;
     });
+    
+    const totalEntriesCount = monthEntries.reduce((sum, entry) => sum + entry.successful + entry.failed + entry.returned, 0);
+    setTotalMonthEntries(totalEntriesCount);
 
     const statsMap = new Map<string, RiderStats>();
     riders.forEach(rider => {
@@ -155,7 +159,11 @@ export default function ReportPage() {
         {reportData.length > 0 && (
           <div>
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold flex items-center"><Trophy className="mr-2 text-yellow-500" /> {reportData.length} Top Performers</h2>
+                <h2 className="text-2xl font-bold flex items-center">
+                    <Trophy className="mr-2 text-yellow-500" />
+                    {reportData.length} Top Performers
+                    {totalMonthEntries > 0 && <span className="text-lg font-medium text-muted-foreground ml-2">({totalMonthEntries} total entries)</span>}
+                </h2>
                 <Badge variant="secondary" className="text-lg">{generatedDate}</Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
