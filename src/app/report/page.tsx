@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Entry, Rider } from '@/lib/types';
-import { initialEntries, riders } from '@/lib/data';
+import { initialEntries, initialRiders } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,12 +33,34 @@ export default function ReportPage() {
   const [showTop10, setShowTop10] = useState(false);
   const [reportData, setReportData] = useState<RiderStats[]>([]);
   const [generatedDate, setGeneratedDate] = useState<string>('');
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [riders, setRiders] = useState<Rider[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const storedEntries = localStorage.getItem('dashboardEntries');
+    if (storedEntries) {
+        setEntries(JSON.parse(storedEntries, (key, value) => {
+            if (key === 'date') return new Date(value);
+            return value;
+        }));
+    } else {
+        setEntries(initialEntries);
+    }
+    const storedRiders = localStorage.getItem('dashboardRiders');
+    if (storedRiders) {
+        setRiders(JSON.parse(storedRiders));
+    } else {
+        setRiders(initialRiders);
+    }
+  }, []);
 
   const handleGenerateReport = () => {
     const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
     const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-    const monthEntries = initialEntries.filter(entry => {
+    const monthEntries = entries.filter(entry => {
       const entryDate = new Date(entry.date);
       return entryDate >= startDate && entryDate <= endDate;
     });
@@ -89,6 +111,8 @@ export default function ReportPage() {
       {value: "7", label: "July"}, {value: "8", label: "August"}, {value: "9", label: "September"},
       {value: "10", label: "October"}, {value: "11", label: "November"}, {value: "12", label: "December"}
   ];
+  
+  if (!isClient) return null;
 
   return (
     <div className="min-h-screen bg-muted/20">

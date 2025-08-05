@@ -1,6 +1,7 @@
+
 import type { Rider, Entry } from './types';
 
-export const riders: Rider[] = [
+export const initialRiders: Rider[] = [
   { id: '1', name: 'Alex Green' },
   { id: '2', name: 'Maria Garcia' },
   { id: '3', name: 'Sam Taylor' },
@@ -8,7 +9,7 @@ export const riders: Rider[] = [
   { id: '5', name: 'Fatima Al-Sayed' },
 ];
 
-const generateEntries = (): Entry[] => {
+const generateEntries = (riders: Rider[]): Entry[] => {
     const entries: Entry[] = [];
     const today = new Date();
     for (let i = 0; i < 90; i++) {
@@ -41,4 +42,4 @@ const generateEntries = (): Entry[] => {
 };
 
 
-export const initialEntries: Entry[] = generateEntries();
+export const initialEntries: Entry[] = generateEntries(initialRiders);

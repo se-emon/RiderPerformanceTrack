@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, PlusCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,9 +30,10 @@ type EntryFormProps = {
   onOpenChange: (isOpen: boolean) => void;
   riders: Rider[];
   onAddEntry: (data: Omit<Entry, 'id'>) => void;
+  onAddNewRider: () => void;
 };
 
-export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry }: EntryFormProps) {
+export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry, onAddNewRider }: EntryFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -99,18 +101,23 @@ export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry }: EntryFor
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Rider Name</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a rider" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {riders.map(rider => (
-                        <SelectItem key={rider.id} value={rider.id}>{rider.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a rider" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {riders.map(rider => (
+                          <SelectItem key={rider.id} value={rider.id}>{rider.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="outline" onClick={onAddNewRider}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> New Rider
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
