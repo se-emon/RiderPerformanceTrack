@@ -109,7 +109,7 @@ const insightsPrompt = ai.definePrompt({
     The rider data is as follows:
     {{#each riderStats}}
     - {{riderName}}:
-        Success Ratio: {{toFixed successRatio 2}}%
+        Success Ratio: {{successRatio}}%
         Total Deliveries: {{total}}
         Active Days: {{activeDays}}
         Successful: {{successful}}, Failed: {{failed}}, Returned: {{returned}}
@@ -124,9 +124,6 @@ const insightsPrompt = ai.definePrompt({
 
     Your response should be formatted as a single block of text, suitable for direct display in a web UI. Do not use markdown headings or lists.
   `,
-  helpers: {
-    toFixed: (num: number, digits: number) => (num * 100).toFixed(digits),
-  }
 });
 
 const reportInsightsFlow = ai.defineFlow(
@@ -136,7 +133,16 @@ const reportInsightsFlow = ai.defineFlow(
     outputSchema: z.string(),
   },
   async (report) => {
-    const { text } = await insightsPrompt(report);
+    const processedReport = {
+        ...report,
+        riderStats: report.riderStats.map(stat => ({
+            ...stat,
+            successRatio: parseFloat((stat.successRatio * 100).toFixed(2)),
+            failRatio: parseFloat((stat.failRatio * 100).toFixed(2)),
+            returnRatio: parseFloat((stat.returnRatio * 100).toFixed(2)),
+        }))
+    };
+    const { text } = await insightsPrompt(processedReport);
     return text;
   }
 );
@@ -144,5 +150,3 @@ const reportInsightsFlow = ai.defineFlow(
 export async function getReportInsights(report: ReportData): Promise<string> {
     return reportInsightsFlow(report);
 }
-
-    
