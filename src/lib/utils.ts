@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatRatio(ratio: number): string {
   if (isNaN(ratio) || !isFinite(ratio)) {
-    return "0.00%";
+    return "0.0%";
   }
-  return `${(ratio * 100).toFixed(2)}%`;
+  return `${(ratio * 100).toFixed(1)}%`;
 }

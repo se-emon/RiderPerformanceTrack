@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-
 type EntriesTableProps = {
   allEntries: Entry[];
   riders: Rider[];
@@ -52,8 +51,6 @@ export function EntriesTable({ allEntries, riders, onEdit, onDelete }: EntriesTa
           riderName: riderMap.get(entry.riderId) ?? 'Unknown Rider',
           total,
           successRatio: total > 0 ? entry.successful / total : 0,
-          failRatio: total > 0 ? entry.failed / total : 0,
-          returnRatio: total > 0 ? entry.returned / total : 0,
         };
       })
       .filter(entry => {
@@ -140,66 +137,65 @@ export function EntriesTable({ allEntries, riders, onEdit, onDelete }: EntriesTa
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Rider</TableHead>
-                <TableHead className="text-right">Delivered</TableHead>
-                <TableHead className="text-right">Failed</TableHead>
-                <TableHead className="text-right">Returned</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Success %</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedEntries.length > 0 ? (
-                paginatedEntries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>
-                      {format(entry.date, "MMM d, yyyy")}
-                      {entry.date.getTime() === today.getTime() && <Badge variant="outline" className="ml-2 bg-accent/50">Today</Badge>}
-                    </TableCell>
-                    <TableCell>{entry.riderName}</TableCell>
-                    <TableCell className="text-right text-green-600 dark:text-green-400">{entry.successful}</TableCell>
-                    <TableCell className="text-right text-red-600 dark:text-red-400">{entry.failed}</TableCell>
-                    <TableCell className="text-right text-yellow-600 dark:text-yellow-400">{entry.returned}</TableCell>
-                    <TableCell className="text-right font-medium">{entry.total}</TableCell>
-                    <TableCell className="text-right">{formatRatio(entry.successRatio)}</TableCell>
-                    <TableCell className="text-right">
-                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onSelect={() => onEdit(entry)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => onDelete(entry)} className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center">
-                    No entries found for the selected filters.
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Rider</TableHead>
+              <TableHead className="text-right">Delivered</TableHead>
+              <TableHead className="text-right">Failed</TableHead>
+              <TableHead className="text-right">Returned</TableHead>
+              <TableHead className="text-right">Total</TableHead>
+              <TableHead className="text-right">Success %</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedEntries.length > 0 ? (
+              paginatedEntries.map((entry) => (
+                <TableRow key={entry.id}>
+                  <TableCell>
+                    {format(entry.date, "MMM d, yyyy")}
+                    {entry.date.getTime() === today.getTime() && <Badge variant="secondary" className="ml-2">Today</Badge>}
+                  </TableCell>
+                  <TableCell>{entry.riderName}</TableCell>
+                  <TableCell className="text-right text-green-600 dark:text-green-400 font-medium">{entry.successful}</TableCell>
+                  <TableCell className="text-right text-yellow-600 dark:text-yellow-500 font-medium">{entry.failed}</TableCell>
+                  <TableCell className="text-right text-red-600 dark:text-red-500 font-medium">{entry.returned}</TableCell>
+                  <TableCell className="text-right font-semibold">{entry.total}</TableCell>
+                  <TableCell className="text-right">{formatRatio(entry.successRatio)}</TableCell>
+                  <TableCell className="text-right">
+                     <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => onEdit(entry)}>
+                          <Pencil className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => onDelete(entry)} className="text-red-600 focus:text-red-600">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="h-24 text-center">
+                  No entries found for the selected filters.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </CardContent>
       <CardFooter>
-        <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
+        <div className="flex w-full items-center justify-between text-sm text-muted-foreground">
             <div>
                 Showing page {currentPage} of {totalPages}
             </div>
@@ -210,17 +206,18 @@ export function EntriesTable({ allEntries, riders, onEdit, onDelete }: EntriesTa
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                 >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="sr-only">Previous</span>
                 </Button>
+                <span>{currentPage}</span>
                 <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                 >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    <span className="sr-only">Next</span>
+                    <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
         </div>

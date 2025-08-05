@@ -24,7 +24,6 @@ export default function DashboardPage() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: 'edit' | 'delete'; entry: Entry } | null>(null);
 
-
   useEffect(() => {
     setIsClient(true);
     const storedEntries = localStorage.getItem('dashboardEntries');
@@ -93,10 +92,8 @@ export default function DashboardPage() {
     const processedEntryData = { ...entryData, date: entryDate };
     
     if ('id' in processedEntryData) {
-      // Editing existing entry
       setEntries(prevEntries => prevEntries.map(e => e.id === processedEntryData.id ? processedEntryData : e).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     } else {
-      // Adding new entry
       const newEntry: Entry = {
         ...processedEntryData,
         id: `${(processedEntryData.date as Date).getTime()}-${processedEntryData.riderId}`,
@@ -124,24 +121,32 @@ export default function DashboardPage() {
   };
 
   if (!isClient) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-2xl font-semibold">Loading Dashboard...</div>
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="flex min-h-screen w-full flex-col">
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          <Header onAddEntry={handleOpenAddEntryForm} />
-          <MetricsCards entries={entries} riders={riders} />
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <EntriesTable allEntries={entries} riders={riders} onEdit={handleOpenEditEntryForm} onDelete={handleOpenDeleteDialog} />
+      <div className="flex min-h-screen w-full flex-col bg-background">
+        <div className="flex flex-1">
+          <main className="flex-1 p-4 sm:p-6">
+            <Header onAddEntry={handleOpenAddEntryForm} />
+            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <MetricsCards entries={entries} riders={riders} />
             </div>
-            <div className="flex flex-col gap-4 md:gap-8">
-              <MonthlyReportCard />
+            <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+              <div className="xl:col-span-2">
+                <EntriesTable allEntries={entries} riders={riders} onEdit={handleOpenEditEntryForm} onDelete={handleOpenDeleteDialog} />
+              </div>
+              <div className="space-y-6">
+                <MonthlyReportCard />
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
       <EntryForm 
         isOpen={isEntryFormOpen} 
