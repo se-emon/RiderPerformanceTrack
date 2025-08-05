@@ -11,6 +11,7 @@ import { MonthlyReportCard } from '@/components/dashboard/monthly-report-card';
 import { EntryForm } from '@/components/dashboard/entry-form';
 import { RiderForm } from '@/components/dashboard/rider-form';
 import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirmation-dialog';
+import { PasswordDialog } from '@/components/dashboard/password-dialog';
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -20,6 +21,9 @@ export default function DashboardPage() {
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<Entry | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: 'edit' | 'delete'; entry: Entry } | null>(null);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -59,8 +63,28 @@ export default function DashboardPage() {
   };
   
   const handleOpenEditEntryForm = (entry: Entry) => {
-    setEditingEntry(entry);
-    setIsEntryFormOpen(true);
+    setPendingAction({ type: 'edit', entry });
+    setIsPasswordDialogOpen(true);
+  };
+  
+  const handleOpenDeleteDialog = (entry: Entry) => {
+    setPendingAction({ type: 'delete', entry });
+    setIsPasswordDialogOpen(true);
+  };
+
+  const handlePasswordSubmit = (password: string) => {
+    if (password === '1234') {
+        setIsPasswordDialogOpen(false);
+        if (pendingAction?.type === 'edit') {
+            setEditingEntry(pendingAction.entry);
+            setIsEntryFormOpen(true);
+        } else if (pendingAction?.type === 'delete') {
+            setDeletingEntry(pendingAction.entry);
+        }
+        setPendingAction(null);
+    } else {
+        alert('Incorrect password');
+    }
   };
 
   const handleSaveEntry = (entryData: Omit<Entry, 'id'> | Entry) => {
@@ -111,7 +135,7 @@ export default function DashboardPage() {
           <MetricsCards entries={entries} riders={riders} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <EntriesTable allEntries={entries} riders={riders} onEdit={handleOpenEditEntryForm} onDelete={setDeletingEntry} />
+              <EntriesTable allEntries={entries} riders={riders} onEdit={handleOpenEditEntryForm} onDelete={handleOpenDeleteDialog} />
             </div>
             <div className="flex flex-col gap-4 md:gap-8">
               <MonthlyReportCard />
@@ -140,6 +164,11 @@ export default function DashboardPage() {
         onOpenChange={() => setDeletingEntry(null)}
         onConfirm={handleDeleteEntry}
       />
+      <PasswordDialog
+        isOpen={isPasswordDialogOpen}
+        onOpenChange={setIsPasswordDialogOpen}
+        onSubmit={handlePasswordSubmit}
+       />
     </>
   );
 }
