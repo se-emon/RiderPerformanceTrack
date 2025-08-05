@@ -20,7 +20,7 @@ import type { Rider, Entry } from "@/lib/types";
 const formSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
   riderId: z.string({ required_error: "Please select a rider." }),
-  successful: z.coerce.number().min(0, "Cannot be negative."),
+  successful: z.coerce.number().min(1, "At least one successful delivery is required."),
   failed: z.coerce.number().min(0, "Cannot be negative."),
   returned: z.coerce.number().min(0, "Cannot be negative."),
 });
