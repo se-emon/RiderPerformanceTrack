@@ -47,7 +47,7 @@ export function MetricsCards({ entries, riders }: MetricsCardsProps) {
         <div className="flex items-start justify-between">
           <p className="text-sm font-medium text-muted-foreground">Failed Ratio</p>
           <div className="p-2 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg">
-            <XCircle className="h-5 w-5 text-yellow-500" />
+            <Undo2 className="h-5 w-5 text-yellow-500" />
           </div>
         </div>
         <div className="mt-2">
@@ -59,7 +59,7 @@ export function MetricsCards({ entries, riders }: MetricsCardsProps) {
         <div className="flex items-start justify-between">
           <p className="text-sm font-medium text-muted-foreground">Return Ratio</p>
           <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
-            <Undo2 className="h-5 w-5 text-red-500" />
+            <XCircle className="h-5 w-5 text-red-500" />
           </div>
         </div>
         <div className="mt-2">
