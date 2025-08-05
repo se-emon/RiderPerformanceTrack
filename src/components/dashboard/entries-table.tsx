@@ -1,15 +1,15 @@
+
 "use client";
 
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useMemo, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Filter, RotateCw } from 'lucide-react';
+import { Calendar as CalendarIcon, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Rider, Entry, EnrichedEntry } from '@/lib/types';
 import { formatRatio } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +25,11 @@ type Filters = {
   endDate: Date | null;
 };
 
+const ENTRIES_PER_PAGE = 10;
+
 export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
   const [filters, setFilters] = useState<Filters>({ riderId: null, startDate: null, endDate: null });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const riderMap = useMemo(() => new Map(riders.map(r => [r.id, r.name])), [riders]);
 
@@ -51,6 +54,17 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
         return startDateMatch && endDateMatch && riderMatch;
       });
   }, [allEntries, filters, riderMap]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  const totalPages = Math.ceil(filteredEntries.length / ENTRIES_PER_PAGE);
+
+  const paginatedEntries = useMemo(() => {
+    const startIndex = (currentPage - 1) * ENTRIES_PER_PAGE;
+    return filteredEntries.slice(startIndex, startIndex + ENTRIES_PER_PAGE);
+  }, [filteredEntries, currentPage]);
   
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -116,8 +130,8 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEntries.length > 0 ? (
-                filteredEntries.map((entry) => (
+              {paginatedEntries.length > 0 ? (
+                paginatedEntries.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell>
                       {format(entry.date, "MMM d, yyyy")}
@@ -142,6 +156,33 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
           </Table>
         </div>
       </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
+            <div>
+                Showing page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+            </div>
+        </div>
+      </CardFooter>
     </Card>
   );
 }
