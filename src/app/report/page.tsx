@@ -1,0 +1,180 @@
+
+"use client";
+
+import { useState, useMemo } from 'react';
+import type { Entry, Rider } from '@/lib/types';
+import { initialEntries, riders } from '@/lib/data';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Trophy, CheckCircle, XCircle, Undo } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+
+type RiderStats = {
+  riderId: string;
+  riderName: string;
+  successful: number;
+  failed: number;
+  returned: number;
+  total: number;
+  successRatio: number;
+  failRatio: number;
+  returnRatio: number;
+};
+
+export default function ReportPage() {
+  const [month, setMonth] = useState((new Date().getMonth() + 1).toString());
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [showTop10, setShowTop10] = useState(false);
+  const [reportData, setReportData] = useState<RiderStats[]>([]);
+  const [generatedDate, setGeneratedDate] = useState<string>('');
+
+  const handleGenerateReport = () => {
+    const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const endDate = new Date(parseInt(year), parseInt(month), 0);
+
+    const monthEntries = initialEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= startDate && entryDate <= endDate;
+    });
+
+    const statsMap = new Map<string, RiderStats>();
+    riders.forEach(rider => {
+      statsMap.set(rider.id, {
+        riderId: rider.id,
+        riderName: rider.name,
+        successful: 0,
+        failed: 0,
+        returned: 0,
+        total: 0,
+        successRatio: 0,
+        failRatio: 0,
+        returnRatio: 0,
+      });
+    });
+
+    monthEntries.forEach(entry => {
+      const stat = statsMap.get(entry.riderId);
+      if (stat) {
+        stat.successful += entry.successful;
+        stat.failed += entry.failed;
+        stat.returned += entry.returned;
+      }
+    });
+
+    const finalStats = Array.from(statsMap.values()).map(stat => {
+      const total = stat.successful + stat.failed + stat.returned;
+      stat.total = total;
+      if (total > 0) {
+        stat.successRatio = stat.successful / total;
+        stat.failRatio = stat.failed / total;
+        stat.returnRatio = stat.returned / total;
+      }
+      return stat;
+    }).filter(s => s.total > 0)
+      .sort((a, b) => b.successRatio - a.successRatio || b.total - a.total);
+    
+    setReportData(showTop10 ? finalStats.slice(0, 10) : finalStats.slice(0, 6));
+    setGeneratedDate(`${month}/${year}`);
+  };
+  
+  const months = [
+      {value: "1", label: "January"}, {value: "2", label: "February"}, {value: "3", label: "March"},
+      {value: "4", label: "April"}, {value: "5", label: "May"}, {value: "6", label: "June"},
+      {value: "7", label: "July"}, {value: "8", label: "August"}, {value: "9", label: "September"},
+      {value: "10", label: "October"}, {value: "11", label: "November"}, {value: "12", label: "December"}
+  ];
+
+  return (
+    <div className="min-h-screen bg-muted/20">
+      <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
+         <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Monthly Performance Report</h1>
+          <Button asChild variant="secondary">
+            <Link href="/">Back to Dashboard</Link>
+          </Button>
+        </div>
+      </header>
+      <main className="container mx-auto p-6">
+        <Card className="mb-6 shadow-lg">
+          <CardContent className="p-4 flex flex-wrap items-center gap-4">
+            <div className="flex-1 min-w-[150px]">
+              <Label htmlFor="month-select">Month</Label>
+              <Select value={month} onValueChange={setMonth}>
+                <SelectTrigger id="month-select">
+                  <SelectValue placeholder="Select Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[150px]">
+                <Label htmlFor="year-input">Year</Label>
+                <Input id="year-input" type="number" value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year"/>
+            </div>
+            <div className="flex items-center space-x-2 self-end">
+                <Checkbox id="top-10" checked={showTop10} onCheckedChange={(checked) => setShowTop10(Boolean(checked))} />
+                <Label htmlFor="top-10">Show Top 10 Only</Label>
+            </div>
+            <div className="self-end">
+                <Button onClick={handleGenerateReport}>Generate</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {reportData.length > 0 && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold flex items-center"><Trophy className="mr-2 text-yellow-500" /> {reportData.length} Top Performers</h2>
+                <Badge variant="secondary" className="text-lg">{generatedDate}</Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reportData.map((rider, index) => (
+                <Card key={rider.riderId} className="shadow-md hover:shadow-xl transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Badge className="mr-3 h-8 w-8 flex items-center justify-center text-lg rounded-full">{index + 1}</Badge>
+                        <span className="text-xl font-bold">{rider.riderName}</span>
+                      </div>
+                      <Badge variant="default" className="text-md">Total: {rider.total}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                     <div>
+                        <div className="flex justify-between items-center mb-1 text-sm">
+                            <span className="flex items-center"><CheckCircle className="mr-2 text-green-500" /> Success</span>
+                            <span>{rider.successful} ({(rider.successRatio * 100).toFixed(1)}%)</span>
+                        </div>
+                        <Progress value={rider.successRatio * 100} className="h-2 [&>div]:bg-green-500" />
+                     </div>
+                     <div>
+                        <div className="flex justify-between items-center mb-1 text-sm">
+                            <span className="flex items-center"><XCircle className="mr-2 text-red-500" /> Failed</span>
+                            <span>{rider.failed} ({(rider.failRatio * 100).toFixed(1)}%)</span>
+                        </div>
+                        <Progress value={rider.failRatio * 100} className="h-2 [&>div]:bg-red-500" />
+                     </div>
+                     <div>
+                        <div className="flex justify-between items-center mb-1 text-sm">
+                            <span className="flex items-center"><Undo className="mr-2 text-yellow-500" /> Returned</span>
+                            <span>{rider.returned} ({(rider.returnRatio * 100).toFixed(1)}%)</span>
+                        </div>
+                        <Progress value={rider.returnRatio * 100} className="h-2 [&>div]:bg-yellow-500" />
+                     </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
