@@ -114,8 +114,8 @@ export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry, onAddNewRi
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button type="button" variant="outline" onClick={onAddNewRider}>
-                      <PlusCircle className="mr-2 h-4 w-4" /> New Rider
+                    <Button type="button" variant="outline" size="icon" onClick={onAddNewRider}>
+                      <PlusCircle className="h-4 w-4" />
                     </Button>
                   </div>
                   <FormMessage />
