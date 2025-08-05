@@ -64,14 +64,18 @@ export default function DashboardPage() {
   };
 
   const handleSaveEntry = (entryData: Omit<Entry, 'id'> | Entry) => {
-    if ('id' in entryData) {
+    const entryDate = new Date(entryData.date);
+    entryDate.setHours(0, 0, 0, 0);
+    const processedEntryData = { ...entryData, date: entryDate };
+    
+    if ('id' in processedEntryData) {
       // Editing existing entry
-      setEntries(prevEntries => prevEntries.map(e => e.id === entryData.id ? entryData : e).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setEntries(prevEntries => prevEntries.map(e => e.id === processedEntryData.id ? processedEntryData : e).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     } else {
       // Adding new entry
       const newEntry: Entry = {
-        ...entryData,
-        id: `${(entryData.date as Date).getTime()}-${entryData.riderId}`,
+        ...processedEntryData,
+        id: `${(processedEntryData.date as Date).getTime()}-${processedEntryData.riderId}`,
       };
       setEntries(prevEntries => [newEntry, ...prevEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     }
