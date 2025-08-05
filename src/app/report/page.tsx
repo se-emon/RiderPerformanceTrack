@@ -182,18 +182,18 @@ export default function ReportPage() {
               {reportData.map((rider, index) => (
                 <Card key={rider.riderId} className="shadow-md hover:shadow-xl transition-shadow bg-card">
                   <CardHeader>
-                    <CardTitle className="flex items-start justify-between">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <Badge className="h-8 w-8 flex-shrink-0 flex items-center justify-center text-lg rounded-full">{index + 1}</Badge>
-                        <span className="text-xl font-bold">{rider.riderName}</span>
+                        <CardTitle className="text-xl font-bold">{rider.riderName}</CardTitle>
                       </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <Badge variant="default" className="text-md">Total: {rider.total}</Badge>
-                        <Badge variant="outline" className="text-sm font-normal flex items-center gap-1">
+                      <Badge variant="default" className="text-md">Total: {rider.total}</Badge>
+                    </div>
+                    <div className="flex justify-end">
+                       <Badge variant="outline" className="text-sm font-normal flex items-center gap-1">
                           <CalendarDays className="h-4 w-4" /> {rider.activeDays} Active Days
                         </Badge>
-                      </div>
-                    </CardTitle>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                      <div>
