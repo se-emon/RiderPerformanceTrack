@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Trophy, CheckCircle, XCircle, Undo } from 'lucide-react';
+import { Trophy, CheckCircle, XCircle, Undo, CalendarDays } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -25,6 +25,7 @@ type RiderStats = {
   successRatio: number;
   failRatio: number;
   returnRatio: number;
+  activeDays: number;
 };
 
 export default function ReportPage() {
@@ -81,8 +82,11 @@ export default function ReportPage() {
         successRatio: 0,
         failRatio: 0,
         returnRatio: 0,
+        activeDays: 0,
       });
     });
+
+    const riderActivity = new Map<string, Set<string>>();
 
     monthEntries.forEach(entry => {
       const stat = statsMap.get(entry.riderId);
@@ -90,12 +94,18 @@ export default function ReportPage() {
         stat.successful += entry.successful;
         stat.failed += entry.failed;
         stat.returned += entry.returned;
+
+        if (!riderActivity.has(entry.riderId)) {
+            riderActivity.set(entry.riderId, new Set());
+        }
+        riderActivity.get(entry.riderId)!.add(new Date(entry.date).toDateString());
       }
     });
 
     const finalStats = Array.from(statsMap.values()).map(stat => {
       const total = stat.successful + stat.failed + stat.returned;
       stat.total = total;
+      stat.activeDays = riderActivity.get(stat.riderId)?.size ?? 0;
       if (total > 0) {
         stat.successRatio = stat.successful / total;
         stat.failRatio = stat.failed / total;
@@ -175,7 +185,12 @@ export default function ReportPage() {
                         <Badge className="mr-3 h-8 w-8 flex items-center justify-center text-lg rounded-full">{index + 1}</Badge>
                         <span className="text-xl font-bold">{rider.riderName}</span>
                       </div>
-                      <Badge variant="default" className="text-md">Total: {rider.total}</Badge>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant="default" className="text-md">Total: {rider.total}</Badge>
+                        <Badge variant="outline" className="text-sm font-normal flex items-center gap-1">
+                          <CalendarDays className="h-4 w-4" /> {rider.activeDays} Active Days
+                        </Badge>
+                      </div>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
