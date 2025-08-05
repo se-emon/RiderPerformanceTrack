@@ -10,12 +10,15 @@ import { EntriesTable } from '@/components/dashboard/entries-table';
 import { MonthlyReportCard } from '@/components/dashboard/monthly-report-card';
 import { EntryForm } from '@/components/dashboard/entry-form';
 import { RiderForm } from '@/components/dashboard/rider-form';
+import { DeleteConfirmationDialog } from '@/components/dashboard/delete-confirmation-dialog';
 
 export default function DashboardPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [riders, setRiders] = useState<Rider[]>([]);
   const [isEntryFormOpen, setIsEntryFormOpen] = useState(false);
   const [isRiderFormOpen, setIsRiderFormOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState<Entry | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -49,14 +52,38 @@ export default function DashboardPage() {
       localStorage.setItem('dashboardRiders', JSON.stringify(riders));
     }
   }, [riders, isClient]);
+  
+  const handleOpenAddEntryForm = () => {
+    setEditingEntry(null);
+    setIsEntryFormOpen(true);
+  };
+  
+  const handleOpenEditEntryForm = (entry: Entry) => {
+    setEditingEntry(entry);
+    setIsEntryFormOpen(true);
+  };
 
-  const handleAddEntry = (newEntryData: Omit<Entry, 'id' | 'date'> & { date: Date }) => {
-    const newEntry: Entry = {
-      ...newEntryData,
-      id: `${newEntryData.date.getTime()}-${newEntryData.riderId}`,
-    };
-    setEntries(prevEntries => [newEntry, ...prevEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  const handleSaveEntry = (entryData: Omit<Entry, 'id'> | Entry) => {
+    if ('id' in entryData) {
+      // Editing existing entry
+      setEntries(prevEntries => prevEntries.map(e => e.id === entryData.id ? entryData : e).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    } else {
+      // Adding new entry
+      const newEntry: Entry = {
+        ...entryData,
+        id: `${(entryData.date as Date).getTime()}-${entryData.riderId}`,
+      };
+      setEntries(prevEntries => [newEntry, ...prevEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    }
     setIsEntryFormOpen(false);
+    setEditingEntry(null);
+  };
+
+  const handleDeleteEntry = () => {
+    if (deletingEntry) {
+      setEntries(prevEntries => prevEntries.filter(entry => entry.id !== deletingEntry.id));
+      setDeletingEntry(null);
+    }
   };
 
   const handleAddRider = (riderName: string) => {
@@ -76,11 +103,11 @@ export default function DashboardPage() {
     <>
       <div className="flex min-h-screen w-full flex-col">
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          <Header onAddEntry={() => setIsEntryFormOpen(true)} />
+          <Header onAddEntry={handleOpenAddEntryForm} />
           <MetricsCards entries={entries} riders={riders} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <EntriesTable allEntries={entries} riders={riders} />
+              <EntriesTable allEntries={entries} riders={riders} onEdit={handleOpenEditEntryForm} onDelete={setDeletingEntry} />
             </div>
             <div className="flex flex-col gap-4 md:gap-8">
               <MonthlyReportCard />
@@ -92,7 +119,8 @@ export default function DashboardPage() {
         isOpen={isEntryFormOpen} 
         onOpenChange={setIsEntryFormOpen} 
         riders={riders} 
-        onAddEntry={handleAddEntry}
+        onSaveEntry={handleSaveEntry}
+        entryToEdit={editingEntry}
         onAddNewRider={() => {
           setIsEntryFormOpen(false);
           setIsRiderFormOpen(true);
@@ -102,6 +130,11 @@ export default function DashboardPage() {
         isOpen={isRiderFormOpen}
         onOpenChange={setIsRiderFormOpen}
         onAddRider={handleAddRider}
+      />
+      <DeleteConfirmationDialog
+        isOpen={!!deletingEntry}
+        onOpenChange={() => setDeletingEntry(null)}
+        onConfirm={handleDeleteEntry}
       />
     </>
   );

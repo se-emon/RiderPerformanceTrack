@@ -10,16 +10,24 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Calendar as CalendarIcon, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Rider, Entry, EnrichedEntry } from '@/lib/types';
+import { Calendar as CalendarIcon, RotateCw, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import type { Rider, Entry } from '@/lib/types';
 import { formatRatio } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 type EntriesTableProps = {
   allEntries: Entry[];
   riders: Rider[];
+  onEdit: (entry: Entry) => void;
+  onDelete: (entry: Entry) => void;
 };
 
 type Filters = {
@@ -29,7 +37,7 @@ type Filters = {
 
 const ENTRIES_PER_PAGE = 10;
 
-export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
+export function EntriesTable({ allEntries, riders, onEdit, onDelete }: EntriesTableProps) {
   const [filters, setFilters] = useState<Filters>({ riderId: null, dateRange: undefined });
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -143,6 +151,7 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
                 <TableHead className="text-right">Returned</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-right">Success %</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -159,11 +168,28 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
                     <TableCell className="text-right text-yellow-600 dark:text-yellow-400">{entry.returned}</TableCell>
                     <TableCell className="text-right font-medium">{entry.total}</TableCell>
                     <TableCell className="text-right">{formatRatio(entry.successRatio)}</TableCell>
+                    <TableCell className="text-right">
+                       <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onSelect={() => onEdit(entry)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => onDelete(entry)} className="text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     No entries found for the selected filters.
                   </TableCell>
                 </TableRow>

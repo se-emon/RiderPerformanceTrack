@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,23 +30,43 @@ type EntryFormProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   riders: Rider[];
-  onAddEntry: (data: Omit<Entry, 'id'>) => void;
+  onSaveEntry: (data: Omit<Entry, 'id'> | Entry) => void;
+  entryToEdit: Entry | null;
   onAddNewRider: () => void;
 };
 
-export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry, onAddNewRider }: EntryFormProps) {
+export function EntryForm({ isOpen, onOpenChange, riders, onSaveEntry, entryToEdit, onAddNewRider }: EntryFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      date: new Date(),
-      successful: 0,
-      failed: 0,
-      returned: 0,
-    },
   });
 
+  useEffect(() => {
+    if (entryToEdit) {
+      form.reset({
+        date: new Date(entryToEdit.date),
+        riderId: entryToEdit.riderId,
+        successful: entryToEdit.successful,
+        failed: entryToEdit.failed,
+        returned: entryToEdit.returned,
+      });
+    } else {
+      form.reset({
+        date: new Date(),
+        riderId: undefined,
+        successful: 0,
+        failed: 0,
+        returned: 0,
+      });
+    }
+  }, [entryToEdit, form, isOpen]);
+
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddEntry(values);
+    if (entryToEdit) {
+      onSaveEntry({ ...entryToEdit, ...values });
+    } else {
+      onSaveEntry(values);
+    }
     form.reset();
   }
 
@@ -53,9 +74,9 @@ export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry, onAddNewRi
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Add Daily Entry</SheetTitle>
+          <SheetTitle>{entryToEdit ? 'Edit Entry' : 'Add Daily Entry'}</SheetTitle>
           <SheetDescription>
-            Record a rider's performance for a specific day. Click save when you're done.
+            {entryToEdit ? 'Update the details for this entry.' : "Record a rider's performance for a specific day."} Click save when you're done.
           </SheetDescription>
         </SheetHeader>
         <Form {...form}>
@@ -102,7 +123,7 @@ export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry, onAddNewRi
                 <FormItem>
                   <FormLabel>Rider Name</FormLabel>
                   <div className="flex gap-2">
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a rider" />
@@ -165,7 +186,7 @@ export function EntryForm({ isOpen, onOpenChange, riders, onAddEntry, onAddNewRi
               <SheetClose asChild>
                 <Button type="button" variant="outline">Cancel</Button>
               </SheetClose>
-              <Button type="submit">Save Entry</Button>
+              <Button type="submit">Save Changes</Button>
             </SheetFooter>
           </form>
         </Form>
