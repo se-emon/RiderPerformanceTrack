@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Entry, Rider } from '@/lib/types';
 import { initialEntries, initialRiders } from '@/lib/data';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Trophy, CheckCircle, XCircle, Undo, CalendarDays } from 'lucide-react';
+import { Trophy, CheckCircle, XCircle, Undo, CalendarDays, Download } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 type RiderStats = {
   riderId: string;
@@ -38,6 +40,9 @@ export default function ReportPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [riders, setRiders] = useState<Rider[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -118,6 +123,23 @@ export default function ReportPage() {
     setReportData(showTop10 ? finalStats.slice(0, 10) : finalStats.slice(0, 6));
     setGeneratedDate(`${month}/${year}`);
   };
+
+  const handleExportPDF = async () => {
+    if (!reportRef.current) return;
+    setIsExporting(true);
+    const canvas = await html2canvas(reportRef.current, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: [canvas.width, canvas.height]
+    });
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+    pdf.save(`RiderTrack-Report-${generatedDate.replace('/', '-')}.pdf`);
+    setIsExporting(false);
+  };
   
   const months = [
       {value: "1", label: "January"}, {value: "2", label: "February"}, {value: "3", label: "March"},
@@ -131,11 +153,17 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
-         <div className="container mx-auto flex justify-between items-center">
+         <div className="container mx-auto flex flex-wrap justify-between items-center gap-4">
           <h1 className="text-2xl font-bold">Monthly Performance Report</h1>
-          <Button asChild variant="secondary">
-            <Link href="/">Back to Dashboard</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleExportPDF} variant="secondary" disabled={reportData.length === 0 || isExporting}>
+                <Download className="mr-2 h-4 w-4" />
+                {isExporting ? 'Exporting...' : 'Export PDF'}
+            </Button>
+            <Button asChild variant="outline" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+                <Link href="/">Back to Dashboard</Link>
+            </Button>
+          </div>
         </div>
       </header>
       <main className="container mx-auto p-4 md:p-6">
@@ -167,7 +195,7 @@ export default function ReportPage() {
         </Card>
 
         {reportData.length > 0 && (
-          <div>
+          <div ref={reportRef} className="bg-muted/20 p-4 rounded-lg">
             <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-2">
                 <h2 className="text-xl md:text-2xl font-bold flex items-center">
                     <Trophy className="mr-2 text-yellow-500" />
@@ -178,7 +206,7 @@ export default function ReportPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {reportData.map((rider, index) => (
-                <Card key={rider.riderId} className="shadow-md hover:shadow-xl transition-shadow">
+                <Card key={rider.riderId} className="shadow-md hover:shadow-xl transition-shadow bg-card">
                   <CardHeader>
                     <CardTitle className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
