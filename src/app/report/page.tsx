@@ -138,54 +138,54 @@ export default function ReportPage() {
           </Button>
         </div>
       </header>
-      <main className="container mx-auto p-6">
+      <main className="container mx-auto p-4 md:p-6">
         <Card className="mb-6 shadow-lg">
-          <CardContent className="p-4 flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-[150px]">
-              <Label htmlFor="month-select">Month</Label>
-              <Select value={month} onValueChange={setMonth}>
-                <SelectTrigger id="month-select">
-                  <SelectValue placeholder="Select Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1 min-w-[150px]">
-                <Label htmlFor="year-input">Year</Label>
-                <Input id="year-input" type="number" value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year"/>
-            </div>
-            <div className="flex items-center space-x-2 self-end">
-                <Checkbox id="top-10" checked={showTop10} onCheckedChange={(checked) => setShowTop10(Boolean(checked))} />
-                <Label htmlFor="top-10">Show Top 10 Only</Label>
-            </div>
-            <div className="self-end">
-                <Button onClick={handleGenerateReport}>Generate</Button>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <div className="grid gap-2">
+                    <Label htmlFor="month-select">Month</Label>
+                    <Select value={month} onValueChange={setMonth}>
+                        <SelectTrigger id="month-select">
+                        <SelectValue placeholder="Select Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="year-input">Year</Label>
+                    <Input id="year-input" type="number" value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year"/>
+                </div>
+                <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox id="top-10" checked={showTop10} onCheckedChange={(checked) => setShowTop10(Boolean(checked))} />
+                    <Label htmlFor="top-10">Show Top 10 Only</Label>
+                </div>
+                <Button onClick={handleGenerateReport} className="w-full lg:w-auto">Generate</Button>
             </div>
           </CardContent>
         </Card>
 
         {reportData.length > 0 && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold flex items-center">
+            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-2">
+                <h2 className="text-xl md:text-2xl font-bold flex items-center">
                     <Trophy className="mr-2 text-yellow-500" />
                     {reportData.length} Top Performers
-                    {totalMonthEntries > 0 && <span className="text-lg font-medium text-muted-foreground ml-2">({totalMonthEntries} total entries)</span>}
+                    {totalMonthEntries > 0 && <span className="text-base md:text-lg font-medium text-muted-foreground ml-2">({totalMonthEntries} total entries)</span>}
                 </h2>
-                <Badge variant="secondary" className="text-lg">{generatedDate}</Badge>
+                <Badge variant="secondary" className="text-base md:text-lg self-start md:self-center">{generatedDate}</Badge>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {reportData.map((rider, index) => (
                 <Card key={rider.riderId} className="shadow-md hover:shadow-xl transition-shadow">
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Badge className="mr-3 h-8 w-8 flex items-center justify-center text-lg rounded-full">{index + 1}</Badge>
+                    <CardTitle className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Badge className="h-8 w-8 flex-shrink-0 flex items-center justify-center text-lg rounded-full">{index + 1}</Badge>
                         <span className="text-xl font-bold">{rider.riderName}</span>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <Badge variant="default" className="text-md">Total: {rider.total}</Badge>
                         <Badge variant="outline" className="text-sm font-normal flex items-center gap-1">
                           <CalendarDays className="h-4 w-4" /> {rider.activeDays} Active Days
