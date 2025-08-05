@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { Entry, Rider } from '@/lib/types';
 import { initialEntries, initialRiders } from '@/lib/data';
 import { Button } from '@/components/ui/button';
@@ -14,19 +14,10 @@ import { Trophy, CheckCircle, XCircle, Undo, CalendarDays } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import type { ReportData, RiderStats } from '@/lib/types';
+import { generateReport, getReportInsights } from '@/ai/flows/report-insights-flow';
+import { ReportInsights } from '@/components/report/report-insights';
 
-type RiderStats = {
-  riderId: string;
-  riderName: string;
-  successful: number;
-  failed: number;
-  returned: number;
-  total: number;
-  successRatio: number;
-  failRatio: number;
-  returnRatio: number;
-  activeDays: number;
-};
 
 export default function ReportPage() {
   const [month, setMonth] = useState((new Date().getMonth() + 1).toString());
@@ -38,6 +29,8 @@ export default function ReportPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [riders, setRiders] = useState<Rider[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [insights, setInsights] = useState<string>('');
+  const [isLoadingInsights, setIsLoadingInsights] = useState<boolean>(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -58,7 +51,8 @@ export default function ReportPage() {
     }
   }, []);
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
+    setInsights('');
     const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
     const endDate = new Date(parseInt(year), parseInt(month), 0);
 
@@ -67,56 +61,22 @@ export default function ReportPage() {
       return entryDate >= startDate && entryDate <= endDate;
     });
     
-    const totalEntriesCount = monthEntries.reduce((sum, entry) => sum + entry.successful + entry.failed + entry.returned, 0);
-    setTotalMonthEntries(totalEntriesCount);
-
-    const statsMap = new Map<string, RiderStats>();
-    riders.forEach(rider => {
-      statsMap.set(rider.id, {
-        riderId: rider.id,
-        riderName: rider.name,
-        successful: 0,
-        failed: 0,
-        returned: 0,
-        total: 0,
-        successRatio: 0,
-        failRatio: 0,
-        returnRatio: 0,
-        activeDays: 0,
-      });
+    const generatedReport = await generateReport({
+        entries: monthEntries,
+        riders,
+        topN: showTop10 ? 10 : 6
     });
 
-    const riderActivity = new Map<string, Set<string>>();
-
-    monthEntries.forEach(entry => {
-      const stat = statsMap.get(entry.riderId);
-      if (stat) {
-        stat.successful += entry.successful;
-        stat.failed += entry.failed;
-        stat.returned += entry.returned;
-
-        if (!riderActivity.has(entry.riderId)) {
-            riderActivity.set(entry.riderId, new Set());
-        }
-        riderActivity.get(entry.riderId)!.add(new Date(entry.date).toDateString());
-      }
-    });
-
-    const finalStats = Array.from(statsMap.values()).map(stat => {
-      const total = stat.successful + stat.failed + stat.returned;
-      stat.total = total;
-      stat.activeDays = riderActivity.get(stat.riderId)?.size ?? 0;
-      if (total > 0) {
-        stat.successRatio = stat.successful / total;
-        stat.failRatio = stat.failed / total;
-        stat.returnRatio = stat.returned / total;
-      }
-      return stat;
-    }).filter(s => s.total > 0)
-      .sort((a, b) => b.successRatio - a.successRatio || b.total - a.total);
-    
-    setReportData(showTop10 ? finalStats.slice(0, 10) : finalStats.slice(0, 6));
+    setReportData(generatedReport.riderStats);
+    setTotalMonthEntries(generatedReport.totalEntries);
     setGeneratedDate(`${month}/${year}`);
+
+    if (generatedReport.riderStats.length > 0) {
+        setIsLoadingInsights(true);
+        const aiInsights = await getReportInsights(generatedReport);
+        setInsights(aiInsights);
+        setIsLoadingInsights(false);
+    }
   };
   
   const months = [
@@ -169,57 +129,64 @@ export default function ReportPage() {
         </Card>
 
         {reportData.length > 0 && (
-          <div className="bg-muted/20 p-4 rounded-lg">
-            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-2">
-                <h2 className="text-xl md:text-2xl font-bold flex items-center">
-                    <Trophy className="mr-2 text-yellow-500" />
-                    {reportData.length} Top Performers
-                    {totalMonthEntries > 0 && <span className="text-base md:text-lg font-medium text-muted-foreground ml-2">({totalMonthEntries} total entries)</span>}
-                </h2>
-                <Badge variant="secondary" className="text-base md:text-lg self-start md:self-center">{generatedDate}</Badge>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+                <div className="bg-muted/20 p-4 rounded-lg h-full">
+                    <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 gap-2">
+                        <h2 className="text-xl md:text-2xl font-bold flex items-center">
+                            <Trophy className="mr-2 text-yellow-500" />
+                            {reportData.length} Top Performers
+                            {totalMonthEntries > 0 && <span className="text-base md:text-lg font-medium text-muted-foreground ml-2">({totalMonthEntries} total entries)</span>}
+                        </h2>
+                        <Badge variant="secondary" className="text-base md:text-lg self-start md:self-center">{generatedDate}</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {reportData.map((rider, index) => (
+                        <Card key={rider.riderId} className="shadow-md hover:shadow-xl transition-shadow bg-card">
+                        <CardHeader>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-3">
+                                    <Badge className="h-8 w-8 flex-shrink-0 flex items-center justify-center text-lg rounded-full">{index + 1}</Badge>
+                                    <CardTitle className="text-xl font-bold truncate">{rider.riderName}</CardTitle>
+                                </div>
+                                <Badge variant="default" className="text-md self-start sm:self-center">Total: {rider.total}</Badge>
+                            </div>
+                            <div className="flex justify-end">
+                            <Badge variant="outline" className="text-sm font-normal flex items-center gap-1">
+                                <CalendarDays className="h-4 w-4" /> {rider.activeDays} Active Days
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div>
+                                <div className="flex justify-between items-center mb-1 text-sm">
+                                    <span className="flex items-center"><CheckCircle className="mr-2 text-green-500" /> Success</span>
+                                    <span>{rider.successful} ({(rider.successRatio * 100).toFixed(1)}%)</span>
+                                </div>
+                                <Progress value={rider.successRatio * 100} className="h-2 [&>div]:bg-green-500" />
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mb-1 text-sm">
+                                    <span className="flex items-center"><Undo className="mr-2 text-yellow-500" /> Failed</span>
+                                    <span>{rider.failed} ({(rider.failRatio * 100).toFixed(1)}%)</span>
+                                </div>
+                                <Progress value={rider.failRatio * 100} className="h-2 [&>div]:bg-yellow-500" />
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mb-1 text-sm">
+                                    <span className="flex items-center"><XCircle className="mr-2 text-red-500" /> Returned</span>
+                                    <span>{rider.returned} ({(rider.returnRatio * 100).toFixed(1)}%)</span>
+                                </div>
+                                <Progress value={rider.returnRatio * 100} className="h-2 [&>div]:bg-red-500" />
+                            </div>
+                        </CardContent>
+                        </Card>
+                    ))}
+                    </div>
+                </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {reportData.map((rider, index) => (
-                <Card key={rider.riderId} className="shadow-md hover:shadow-xl transition-shadow bg-card">
-                  <CardHeader>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-3">
-                            <Badge className="h-8 w-8 flex-shrink-0 flex items-center justify-center text-lg rounded-full">{index + 1}</Badge>
-                            <CardTitle className="text-xl font-bold truncate">{rider.riderName}</CardTitle>
-                        </div>
-                        <Badge variant="default" className="text-md self-start sm:self-center">Total: {rider.total}</Badge>
-                    </div>
-                    <div className="flex justify-end">
-                       <Badge variant="outline" className="text-sm font-normal flex items-center gap-1">
-                          <CalendarDays className="h-4 w-4" /> {rider.activeDays} Active Days
-                        </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                     <div>
-                        <div className="flex justify-between items-center mb-1 text-sm">
-                            <span className="flex items-center"><CheckCircle className="mr-2 text-green-500" /> Success</span>
-                            <span>{rider.successful} ({(rider.successRatio * 100).toFixed(1)}%)</span>
-                        </div>
-                        <Progress value={rider.successRatio * 100} className="h-2 [&>div]:bg-green-500" />
-                     </div>
-                     <div>
-                        <div className="flex justify-between items-center mb-1 text-sm">
-                            <span className="flex items-center"><Undo className="mr-2 text-yellow-500" /> Failed</span>
-                            <span>{rider.failed} ({(rider.failRatio * 100).toFixed(1)}%)</span>
-                        </div>
-                        <Progress value={rider.failRatio * 100} className="h-2 [&>div]:bg-yellow-500" />
-                     </div>
-                     <div>
-                        <div className="flex justify-between items-center mb-1 text-sm">
-                            <span className="flex items-center"><XCircle className="mr-2 text-red-500" /> Returned</span>
-                            <span>{rider.returned} ({(rider.returnRatio * 100).toFixed(1)}%)</span>
-                        </div>
-                        <Progress value={rider.returnRatio * 100} className="h-2 [&>div]:bg-red-500" />
-                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="lg:col-span-1">
+                <ReportInsights insights={insights} isLoading={isLoadingInsights} />
             </div>
           </div>
         )}
@@ -227,3 +194,5 @@ export default function ReportPage() {
     </div>
   );
 }
+
+    

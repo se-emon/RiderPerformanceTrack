@@ -19,3 +19,25 @@ export type EnrichedEntry = Entry & {
   failRatio: number;
   returnRatio: number;
 };
+
+export type RiderStats = {
+  riderId: string;
+  riderName: string;
+  successful: number;
+  failed: number;
+  returned: number;
+  total: number;
+  successRatio: number;
+  failRatio: number;
+  returnRatio: number;
+  activeDays: number;
+};
+
+export type ReportData = {
+  riderStats: RiderStats[];
+  totalEntries: number;
+  month: string;
+  year: string;
+};
+
+    
