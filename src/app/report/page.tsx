@@ -205,17 +205,17 @@ export default function ReportPage() {
                      </div>
                      <div>
                         <div className="flex justify-between items-center mb-1 text-sm">
-                            <span className="flex items-center"><XCircle className="mr-2 text-red-500" /> Failed</span>
+                            <span className="flex items-center"><Undo className="mr-2 text-yellow-500" /> Failed</span>
                             <span>{rider.failed} ({(rider.failRatio * 100).toFixed(1)}%)</span>
                         </div>
-                        <Progress value={rider.failRatio * 100} className="h-2 [&>div]:bg-red-500" />
+                        <Progress value={rider.failRatio * 100} className="h-2 [&>div]:bg-yellow-500" />
                      </div>
                      <div>
                         <div className="flex justify-between items-center mb-1 text-sm">
-                            <span className="flex items-center"><Undo className="mr-2 text-yellow-500" /> Returned</span>
+                            <span className="flex items-center"><XCircle className="mr-2 text-red-500" /> Returned</span>
                             <span>{rider.returned} ({(rider.returnRatio * 100).toFixed(1)}%)</span>
                         </div>
-                        <Progress value={rider.returnRatio * 100} className="h-2 [&>div]:bg-yellow-500" />
+                        <Progress value={rider.returnRatio * 100} className="h-2 [&>div]:bg-red-500" />
                      </div>
                   </CardContent>
                 </Card>
