@@ -78,10 +78,10 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
       <CardHeader>
         <CardTitle>Daily Entries</CardTitle>
         <CardDescription>View and filter daily rider performance records.</CardDescription>
-        <div className="flex flex-wrap items-center gap-2 pt-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-2 pt-4">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+              <Button variant="outline" className="w-full md:w-auto justify-start text-left font-normal">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {filters.startDate ? format(filters.startDate, "PPP") : <span>Start Date</span>}
               </Button>
@@ -92,7 +92,7 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
           </Popover>
            <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+              <Button variant="outline" className="w-full md:w-auto justify-start text-left font-normal">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {filters.endDate ? format(filters.endDate, "PPP") : <span>End Date</span>}
               </Button>
@@ -102,7 +102,7 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
             </PopoverContent>
           </Popover>
           <Select onValueChange={(val) => setFilters(f => ({...f, riderId: val === 'all' ? null : val}))} value={filters.riderId || 'all'}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full md:w-[200px]">
               <SelectValue placeholder="Filter by Rider" />
             </SelectTrigger>
             <SelectContent>
@@ -110,7 +110,7 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
               {riders.map(rider => <SelectItem key={rider.id} value={rider.id}>{rider.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button onClick={resetFilters} variant="ghost">
+          <Button onClick={resetFilters} variant="ghost" className="w-full md:w-auto">
             <RotateCw className="mr-2 h-4 w-4" /> Reset
           </Button>
         </div>
