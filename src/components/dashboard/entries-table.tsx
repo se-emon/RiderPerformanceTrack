@@ -156,7 +156,7 @@ export function EntriesTable({ allEntries, riders, onEdit, onDelete }: EntriesTa
                 <TableRow key={entry.id}>
                   <TableCell>
                     {format(entry.date, "MMM d, yyyy")}
-                    {entry.date.getTime() === today.getTime() && <Badge variant="secondary" className="ml-2">Today</Badge>}
+                    {entry.date.getTime() === today.getTime() && <Badge variant="default" className="ml-2">Today</Badge>}
                   </TableCell>
                   <TableCell>{entry.riderName}</TableCell>
                   <TableCell className="text-right text-green-600 dark:text-green-400 font-medium">{entry.successful}</TableCell>
