@@ -9,10 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
 import { Calendar as CalendarIcon, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Rider, Entry, EnrichedEntry } from '@/lib/types';
 import { formatRatio } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { cn } from "@/lib/utils";
+
 
 type EntriesTableProps = {
   allEntries: Entry[];
@@ -21,14 +24,13 @@ type EntriesTableProps = {
 
 type Filters = {
   riderId: string | null;
-  startDate: Date | null;
-  endDate: Date | null;
+  dateRange: DateRange | undefined;
 };
 
 const ENTRIES_PER_PAGE = 10;
 
 export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
-  const [filters, setFilters] = useState<Filters>({ riderId: null, startDate: null, endDate: null });
+  const [filters, setFilters] = useState<Filters>({ riderId: null, dateRange: undefined });
   const [currentPage, setCurrentPage] = useState(1);
 
   const riderMap = useMemo(() => new Map(riders.map(r => [r.id, r.name])), [riders]);
@@ -48,8 +50,8 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
       })
       .filter(entry => {
         const date = new Date(entry.date);
-        const startDateMatch = !filters.startDate || date >= filters.startDate;
-        const endDateMatch = !filters.endDate || date <= filters.endDate;
+        const startDateMatch = !filters.dateRange?.from || date >= filters.dateRange.from;
+        const endDateMatch = !filters.dateRange?.to || date <= filters.dateRange.to;
         const riderMatch = !filters.riderId || entry.riderId === filters.riderId;
         return startDateMatch && endDateMatch && riderMatch;
       });
@@ -70,7 +72,7 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
   today.setHours(0,0,0,0);
 
   const resetFilters = () => {
-    setFilters({ riderId: null, startDate: null, endDate: null });
+    setFilters({ riderId: null, dateRange: undefined });
   };
 
   return (
@@ -81,24 +83,38 @@ export function EntriesTable({ allEntries, riders }: EntriesTableProps) {
         <div className="flex flex-col md:flex-row md:items-center gap-2 pt-4">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full md:w-auto justify-start text-left font-normal">
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "w-full md:w-auto justify-start text-left font-normal",
+                  !filters.dateRange && "text-muted-foreground"
+                )}
+              >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.startDate ? format(filters.startDate, "PPP") : <span>Start Date</span>}
+                {filters.dateRange?.from ? (
+                  filters.dateRange.to ? (
+                    <>
+                      {format(filters.dateRange.from, "LLL dd, y")} -{" "}
+                      {format(filters.dateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(filters.dateRange.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Pick a date range</span>
+                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={filters.startDate} onSelect={(d) => setFilters(f => ({...f, startDate: d || null}))} initialFocus />
-            </PopoverContent>
-          </Popover>
-           <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full md:w-auto justify-start text-left font-normal">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {filters.endDate ? format(filters.endDate, "PPP") : <span>End Date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar mode="single" selected={filters.endDate} onSelect={(d) => setFilters(f => ({...f, endDate: d || null}))} initialFocus />
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={filters.dateRange?.from}
+                selected={filters.dateRange}
+                onSelect={(range) => setFilters(f => ({...f, dateRange: range}))}
+                numberOfMonths={2}
+              />
             </PopoverContent>
           </Popover>
           <Select onValueChange={(val) => setFilters(f => ({...f, riderId: val === 'all' ? null : val}))} value={filters.riderId || 'all'}>
